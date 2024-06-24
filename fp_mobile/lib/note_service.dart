@@ -87,5 +87,5 @@ class FirestoreNoteService implements INoteService {
     final updatedSnapshot = await ref.get();
     final updatedNote = Note.fromSnapshot(updatedSnapshot);
     return updatedNote;
-}
+  }
 }

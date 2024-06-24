@@ -71,7 +71,7 @@ class _NoteEditWidgetState extends State<NoteEditWidget> {
     showInSnackBar('Uploading Image...');
   }
 
-  Future<void> getImage() async {
+  Future<void> getImageFromGallery() async {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       maxHeight: 512,
@@ -82,28 +82,39 @@ class _NoteEditWidgetState extends State<NoteEditWidget> {
     });
   }
 
-  Future<String?> getCityName(double latitude, double longitude) async {
-  try {
-    List<geocoding.Placemark> placemarks = await geocoding.placemarkFromCoordinates(latitude, longitude);
-    if (placemarks.isNotEmpty) {
-      return placemarks[0].locality;
-    }
-  } catch (e) {
-    print('Error getting city name: $e');
+  Future<void> getImageFromCamera() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxHeight: 512,
+      maxWidth: 512,
+    );
+    setState(() {
+      _image = pickedFile != null ? File(pickedFile.path) : null;
+    });
   }
-  return null;
-}
 
-  Future<LocationData?> getLocation() async {
-  try {
-    return await location.getLocation();
-  } catch (e) {
-    print('Could not get location: $e');
+  Future<String?> getCityName(double latitude, double longitude) async {
+    try {
+      List<geocoding.Placemark> placemarks = await geocoding.placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        return placemarks[0].locality;
+      }
+    } catch (e) {
+      print('Error getting city name: $e');
+    }
     return null;
   }
-}
 
-Future<void> _getLocationAndCityName() async {
+  Future<LocationData?> getLocation() async {
+    try {
+      return await location.getLocation();
+    } catch (e) {
+      print('Could not get location: $e');
+      return null;
+    }
+  }
+
+  Future<void> _getLocationAndCityName() async {
     try {
       final locationData = await location.getLocation();
       final cityName = await getCityName(locationData.latitude!, locationData.longitude!);
@@ -257,16 +268,27 @@ Future<void> _getLocationAndCityName() async {
         actions: isEditing
             ? <Widget>[
                 IconButton(
-                  icon: Icon(Icons.delete),
+                  icon: const Icon(Icons.delete),
                   onPressed: () => deleteNote(widget._note!),
                 ),
               ]
             : null,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _task != null || _noteModel.isSubmittingNote ? null : getImage,
-        tooltip: 'Pick Image',
-        child: Icon(Icons.add_a_photo),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: _task != null || _noteModel.isSubmittingNote ? null : getImageFromGallery,
+            tooltip: 'Pick Image from Gallery',
+            child: const Icon(Icons.photo),
+          ),
+          SizedBox(width: 16),
+          FloatingActionButton(
+            onPressed: _task != null || _noteModel.isSubmittingNote ? null : getImageFromCamera,
+            tooltip: 'Take a Photo',
+            child: const Icon(Icons.camera_alt),
+          ),
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
